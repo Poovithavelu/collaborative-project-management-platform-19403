@@ -52,7 +52,9 @@ create table if not exists public.tasks (
     status text not null default 'todo',
     assignee_id uuid references public.users(id) on delete set null,
     created_by uuid references public.users(id) on delete set null,
-    created_at timestamptz not null default now()
+    created_at timestamptz not null default now(),
+    -- New: order index for drag/drop and lane ordering
+    order_index integer
 );
 
 -- Helpful indexes
@@ -61,5 +63,8 @@ create index if not exists idx_memberships_org on public.memberships(org_id);
 create index if not exists idx_projects_org on public.projects(org_id);
 create index if not exists idx_tasks_org on public.tasks(org_id);
 create index if not exists idx_tasks_project on public.tasks(project_id);
+-- Composite indexes to support Kanban and drag reordering
+create index if not exists idx_tasks_project_status_order on public.tasks(project_id, status, order_index);
+create index if not exists idx_tasks_org_project_order on public.tasks(org_id, project_id, order_index);
 
 -- Note: RLS policies are defined in a separate file to allow environment-specific bindings.

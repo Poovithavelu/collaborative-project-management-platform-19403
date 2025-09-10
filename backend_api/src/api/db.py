@@ -66,10 +66,15 @@ async def init_db_schema() -> None:
                 status text not null default 'todo',
                 assignee_id uuid references users(id) on delete set null,
                 created_by uuid references users(id) on delete set null,
-                created_at timestamptz not null default now()
+                created_at timestamptz not null default now(),
+                -- New column to support ordering within a project/status lane
+                order_index integer
             );
             create index if not exists idx_tasks_org on tasks(org_id);
             create index if not exists idx_tasks_project on tasks(project_id);
+            -- Helpful composite indexes for ordering use cases
+            create index if not exists idx_tasks_project_status_order on tasks(project_id, status, order_index);
+            create index if not exists idx_tasks_org_project_order on tasks(org_id, project_id, order_index);
 
             -- Comments table for tasks
             create table if not exists comments (
