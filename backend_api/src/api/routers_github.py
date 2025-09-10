@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Optional
+
 
 from fastapi import APIRouter, Depends, HTTPException, Body
 import httpx

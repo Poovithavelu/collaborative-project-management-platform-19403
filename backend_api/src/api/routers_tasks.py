@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status, Body, Query
+from fastapi import APIRouter, Depends, HTTPException, Body, Query
 from .authz import require_org_role
 from .db import get_pool
 from .schemas import TaskCreate, TaskUpdate, Task
