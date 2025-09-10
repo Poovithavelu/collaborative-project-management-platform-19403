@@ -88,6 +88,24 @@ async def init_db_schema() -> None:
             create index if not exists idx_comments_org on comments(org_id);
             create index if not exists idx_comments_task on comments(task_id);
 
+            -- Files/Attachments table for local development
+            create table if not exists attachments (
+                id uuid primary key default gen_random_uuid(),
+                org_id uuid not null references organizations(id) on delete cascade,
+                project_id uuid references projects(id) on delete cascade,
+                task_id uuid references tasks(id) on delete cascade,
+                uploader_id uuid references users(id) on delete set null,
+                filename text not null,
+                content_type text,
+                size_bytes bigint,
+                storage_path text not null,
+                created_at timestamptz not null default now()
+            );
+            create index if not exists idx_attachments_org on attachments(org_id);
+            create index if not exists idx_attachments_project on attachments(project_id);
+            create index if not exists idx_attachments_task on attachments(task_id);
+            create index if not exists idx_attachments_created on attachments(created_at);
+
             -- Audit log table
             create table if not exists audit_log (
                 id uuid primary key default gen_random_uuid(),

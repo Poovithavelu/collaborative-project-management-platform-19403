@@ -7,6 +7,8 @@ from .routers_auth import router as auth_router
 from .routers_projects import router as projects_router
 from .routers_tasks import router as tasks_router
 from .routers_comments import router as comments_router
+from .routers_uploads import router as uploads_router
+from .routers_billing import router as billing_router
 
 openapi_tags = [
     {"name": "Authentication", "description": "Endpoints for user authentication and organization management."},
@@ -165,3 +167,5 @@ app.include_router(auth_router)
 app.include_router(projects_router)
 app.include_router(tasks_router)
 app.include_router(comments_router)
+app.include_router(uploads_router)
+app.include_router(billing_router)

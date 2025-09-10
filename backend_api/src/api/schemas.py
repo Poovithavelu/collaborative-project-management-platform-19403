@@ -133,3 +133,51 @@ class Comment(BaseModel):
     author_id: Optional[str] = Field(default=None, description="User ID who wrote the comment")
     content: str = Field(..., description="Comment text content")
     created_at: str = Field(..., description="Creation timestamp (ISO)")
+
+
+# ---------- Uploads/Attachments Schemas ----------
+
+# PUBLIC_INTERFACE
+class Attachment(BaseModel):
+    """Attachment metadata returned after upload."""
+    id: str = Field(..., description="Attachment ID")
+    org_id: str = Field(..., description="Owning organization ID")
+    project_id: Optional[str] = Field(default=None, description="Project ID this file is associated with")
+    task_id: Optional[str] = Field(default=None, description="Task ID this file is associated with")
+    uploader_id: Optional[str] = Field(default=None, description="User ID who uploaded the file")
+    filename: str = Field(..., description="Original filename")
+    content_type: Optional[str] = Field(default=None, description="MIME type of the uploaded file")
+    size_bytes: Optional[int] = Field(default=None, description="Size of file in bytes")
+    storage_path: str = Field(..., description="Local storage path where the file is saved")
+    created_at: str = Field(..., description="Creation timestamp (ISO)")
+
+# PUBLIC_INTERFACE
+class UploadTarget(BaseModel):
+    """Target association for an upload (one of project_id or task_id required)."""
+    project_id: Optional[str] = Field(default=None, description="Project ID to associate the file with")
+    task_id: Optional[str] = Field(default=None, description="Task ID to associate the file with")
+
+
+# ---------- Billing/Stripe Schemas ----------
+
+# PUBLIC_INTERFACE
+class CheckoutSessionRequest(BaseModel):
+    """Request to create a Stripe Checkout Session for a price/product."""
+    price_id: str = Field(..., description="Stripe Price ID to subscribe/purchase")
+    success_url: str = Field(..., description="Where to redirect on success (must be allowed by Stripe settings)")
+    cancel_url: str = Field(..., description="Where to redirect if the user cancels")
+
+# PUBLIC_INTERFACE
+class CheckoutSessionResponse(BaseModel):
+    """Response with checkout session URL."""
+    url: str = Field(..., description="Hosted Checkout URL")
+
+# PUBLIC_INTERFACE
+class CustomerPortalRequest(BaseModel):
+    """Request to create a Stripe Billing Portal link."""
+    return_url: str = Field(..., description="URL to return to after managing billing")
+
+# PUBLIC_INTERFACE
+class CustomerPortalResponse(BaseModel):
+    """Response with billing portal URL."""
+    url: str = Field(..., description="Customer portal URL")
