@@ -28,14 +28,22 @@ app = FastAPI(
 )
 
 settings = get_settings()
-allow_origins = [o.strip() for o in settings.cors_allow_origins.split(",")] if settings.cors_allow_origins else ["*"]
 
+# Parse CORS configuration from settings with secure defaults.
+allow_origins = [o.strip() for o in settings.cors_allow_origins.split(",") if o.strip()]
+allow_methods = [m.strip().upper() for m in settings.cors_allow_methods.split(",") if m.strip()]
+allow_headers = [h.strip() for h in settings.cors_allow_headers.split(",") if h.strip()]
+allow_credentials = bool(settings.cors_allow_credentials)
+
+# Important security note:
+# - When allow_credentials is True, FastAPI/Starlette disallows wildcard '*' for allow_origins.
+# - Ensure only explicit origins are configured via env in production.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=allow_credentials,
+    allow_methods=allow_methods,
+    allow_headers=allow_headers,
 )
 
 

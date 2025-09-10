@@ -9,7 +9,24 @@ class Settings(BaseModel):
     jwt_secret: str = Field(..., description="Secret key for signing JWT tokens")
     jwt_algorithm: str = Field(default="HS256", description="JWT algorithm")
     jwt_expires_minutes: int = Field(default=120, description="JWT expiration in minutes")
-    cors_allow_origins: str = Field(default="*", description="CORS allowed origins, comma-separated")
+
+    # CORS and security-related settings
+    cors_allow_origins: str = Field(
+        default="http://localhost:3000",
+        description="CORS allowed origins, comma-separated. Example: https://app.collabtask.com,https://www.app.collabtask.com,http://localhost:3000"
+    )
+    cors_allow_credentials: bool = Field(
+        default=True,
+        description="Whether to allow credentials (cookies/authorization headers). Should be True only if required by the frontend."
+    )
+    cors_allow_methods: str = Field(
+        default="GET,POST,PUT,PATCH,DELETE,OPTIONS",
+        description="Comma-separated list of allowed CORS methods."
+    )
+    cors_allow_headers: str = Field(
+        default="Authorization,Content-Type,Accept,Origin,User-Agent,Accept-Language,Accept-Encoding",
+        description="Comma-separated list of allowed CORS headers. Avoid '*' in production."
+    )
 
     postgres_url: str | None = Field(default=None, description="Full Postgres URL, optional")
     postgres_user: str | None = None
@@ -42,7 +59,13 @@ def get_settings() -> Settings:
             jwt_secret=os.getenv("JWT_SECRET", ""),
             jwt_algorithm=os.getenv("JWT_ALGORITHM", "HS256"),
             jwt_expires_minutes=int(os.getenv("JWT_EXPIRES_MINUTES", "120")),
-            cors_allow_origins=os.getenv("CORS_ALLOW_ORIGINS", "*"),
+            cors_allow_origins=os.getenv("CORS_ALLOW_ORIGINS", "http://localhost:3000"),
+            cors_allow_credentials=os.getenv("CORS_ALLOW_CREDENTIALS", "true").lower() in ("1", "true", "yes"),
+            cors_allow_methods=os.getenv("CORS_ALLOW_METHODS", "GET,POST,PUT,PATCH,DELETE,OPTIONS"),
+            cors_allow_headers=os.getenv(
+                "CORS_ALLOW_HEADERS",
+                "Authorization,Content-Type,Accept,Origin,User-Agent,Accept-Language,Accept-Encoding"
+            ),
             postgres_url=os.getenv("POSTGRES_URL"),
             postgres_user=os.getenv("POSTGRES_USER"),
             postgres_password=os.getenv("POSTGRES_PASSWORD"),
