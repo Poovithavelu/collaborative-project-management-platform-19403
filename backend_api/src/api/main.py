@@ -4,9 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import get_settings
 from .db import init_db_schema
 from .routers_auth import router as auth_router
+from .routers_projects import router as projects_router
 
 openapi_tags = [
     {"name": "Authentication", "description": "Endpoints for user authentication and organization management."},
+    {"name": "Projects", "description": "CRUD endpoints for projects within an organization."},
 ]
 
 app = FastAPI(
@@ -42,3 +44,4 @@ def health_check():
 
 # Mount Routers
 app.include_router(auth_router)
+app.include_router(projects_router)

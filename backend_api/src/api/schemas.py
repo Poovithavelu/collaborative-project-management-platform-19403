@@ -43,3 +43,28 @@ class UserProfile(BaseModel):
 class SwitchOrgRequest(BaseModel):
     """Request to switch the active organization context."""
     org_id: str = Field(..., description="Organization ID to switch to")
+
+
+# ---------- Projects Schemas ----------
+
+# PUBLIC_INTERFACE
+class ProjectCreate(BaseModel):
+    """Request body to create a project within the active organization."""
+    name: str = Field(..., description="Project name")
+    description: Optional[str] = Field(default=None, description="Project description")
+
+# PUBLIC_INTERFACE
+class ProjectUpdate(BaseModel):
+    """Request body to update a project."""
+    name: Optional[str] = Field(default=None, description="New project name")
+    description: Optional[str] = Field(default=None, description="New project description")
+
+# PUBLIC_INTERFACE
+class Project(BaseModel):
+    """Project response model."""
+    id: str = Field(..., description="Project ID")
+    org_id: str = Field(..., description="Owning organization ID")
+    name: str = Field(..., description="Project name")
+    description: Optional[str] = Field(default=None, description="Project description")
+    created_by: Optional[str] = Field(default=None, description="ID of user who created the project")
+    created_at: str = Field(..., description="Creation timestamp (ISO)")
