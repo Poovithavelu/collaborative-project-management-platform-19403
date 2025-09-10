@@ -68,3 +68,36 @@ class Project(BaseModel):
     description: Optional[str] = Field(default=None, description="Project description")
     created_by: Optional[str] = Field(default=None, description="ID of user who created the project")
     created_at: str = Field(..., description="Creation timestamp (ISO)")
+
+
+# ---------- Tasks Schemas ----------
+
+# PUBLIC_INTERFACE
+class TaskCreate(BaseModel):
+    """Request body to create a task within a project in the active organization."""
+    project_id: str = Field(..., description="Project ID the task belongs to")
+    title: str = Field(..., description="Task title")
+    description: Optional[str] = Field(default=None, description="Task description")
+    status: Optional[str] = Field(default="todo", description="Task status (todo, in_progress, done, etc.)")
+    assignee_id: Optional[str] = Field(default=None, description="User ID assigned to the task")
+
+# PUBLIC_INTERFACE
+class TaskUpdate(BaseModel):
+    """Request body to update a task."""
+    title: Optional[str] = Field(default=None, description="New task title")
+    description: Optional[str] = Field(default=None, description="New task description")
+    status: Optional[str] = Field(default=None, description="New task status")
+    assignee_id: Optional[str] = Field(default=None, description="New assignee user ID (null to unassign)")
+
+# PUBLIC_INTERFACE
+class Task(BaseModel):
+    """Task response model."""
+    id: str = Field(..., description="Task ID")
+    org_id: str = Field(..., description="Owning organization ID")
+    project_id: Optional[str] = Field(default=None, description="Project ID this task belongs to")
+    title: str = Field(..., description="Task title")
+    description: Optional[str] = Field(default=None, description="Task description")
+    status: str = Field(..., description="Task status")
+    assignee_id: Optional[str] = Field(default=None, description="Assigned user ID")
+    created_by: Optional[str] = Field(default=None, description="ID of user who created the task")
+    created_at: str = Field(..., description="Creation timestamp (ISO)")

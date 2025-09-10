@@ -5,10 +5,12 @@ from .config import get_settings
 from .db import init_db_schema
 from .routers_auth import router as auth_router
 from .routers_projects import router as projects_router
+from .routers_tasks import router as tasks_router
 
 openapi_tags = [
     {"name": "Authentication", "description": "Endpoints for user authentication and organization management."},
     {"name": "Projects", "description": "CRUD endpoints for projects within an organization."},
+    {"name": "Tasks", "description": "CRUD endpoints for tasks within a project in an organization."},
 ]
 
 app = FastAPI(
@@ -45,3 +47,4 @@ def health_check():
 # Mount Routers
 app.include_router(auth_router)
 app.include_router(projects_router)
+app.include_router(tasks_router)

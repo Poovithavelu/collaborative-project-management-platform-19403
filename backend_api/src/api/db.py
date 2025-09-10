@@ -55,5 +55,20 @@ async def init_db_schema() -> None:
                 created_at timestamptz not null default now()
             );
             create index if not exists idx_projects_org on projects(org_id);
+
+            -- Minimal tasks table for local development
+            create table if not exists tasks (
+                id uuid primary key default gen_random_uuid(),
+                org_id uuid not null references organizations(id) on delete cascade,
+                project_id uuid references projects(id) on delete cascade,
+                title text not null,
+                description text,
+                status text not null default 'todo',
+                assignee_id uuid references users(id) on delete set null,
+                created_by uuid references users(id) on delete set null,
+                created_at timestamptz not null default now()
+            );
+            create index if not exists idx_tasks_org on tasks(org_id);
+            create index if not exists idx_tasks_project on tasks(project_id);
             """
         )
