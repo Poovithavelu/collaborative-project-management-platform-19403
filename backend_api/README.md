@@ -23,6 +23,11 @@ Environment:
   - STRIPE_API_KEY (required for billing endpoints)
   - STRIPE_WEBHOOK_SECRET (optional for verifying webhooks)
   - STRIPE_BILLING_PORTAL_CONFIG_ID (optional)
+  - GITHUB_CLIENT_ID (required for GitHub OAuth)
+  - GITHUB_CLIENT_SECRET (required for GitHub OAuth)
+  - GITHUB_OAUTH_CALLBACK_URL (optional; override inferred callback URL, e.g., https://api.example.com/github/callback)
+  - GITHUB_OAUTH_SCOPE (optional; default: "repo read:org user:email")
+  - SITE_URL (optional; used to redirect after successful GitHub connection)
 
 Security:
 - Passwords are hashed (passlib[bcrypt]).
@@ -34,3 +39,14 @@ Database:
 
 Notes:
 - Do not commit .env. Request these secrets from the environment orchestrator.
+
+GitHub Integration:
+- GET /github/connect (auth required): Redirects to GitHub to authorize access. Stores a CSRF 'state'.
+- GET /github/callback: Handles GitHub redirect, verifies 'state', exchanges 'code' for access token, and stores it per-organization.
+
+Database tables created:
+- github_oauth_states(state, user_id, org_id, created_at, consumed)
+- github_tokens(org_id, access_token, token_type, scope, gh_user_login, gh_user_id, created_at, updated_at)
+
+Security:
+- Access tokens are stored server-side per organization, not returned to clients. The 'state' parameter prevents CSRF.

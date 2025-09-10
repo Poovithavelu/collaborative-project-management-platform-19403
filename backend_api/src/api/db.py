@@ -179,5 +179,27 @@ async def init_db_schema() -> None:
             create trigger trg_tasks_audit_delete
             after delete on tasks
             for each row execute function public.log_task_changes();
+
+            -- GitHub OAuth state table for CSRF protection
+            create table if not exists github_oauth_states (
+                state text primary key,
+                user_id uuid not null references users(id) on delete cascade,
+                org_id uuid not null references organizations(id) on delete cascade,
+                created_at timestamptz not null default now(),
+                consumed boolean not null default false
+            );
+
+            -- GitHub tokens table (one per org)
+            create table if not exists github_tokens (
+                org_id uuid primary key references organizations(id) on delete cascade,
+                access_token text not null,
+                token_type text,
+                scope text,
+                gh_user_login text,
+                gh_user_id bigint,
+                created_at timestamptz not null default now(),
+                updated_at timestamptz not null default now()
+            );
+            create index if not exists idx_github_tokens_org on github_tokens(org_id);
             """
         )
