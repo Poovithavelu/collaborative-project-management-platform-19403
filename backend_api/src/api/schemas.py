@@ -101,3 +101,22 @@ class Task(BaseModel):
     assignee_id: Optional[str] = Field(default=None, description="Assigned user ID")
     created_by: Optional[str] = Field(default=None, description="ID of user who created the task")
     created_at: str = Field(..., description="Creation timestamp (ISO)")
+
+
+# ---------- Comments Schemas ----------
+
+# PUBLIC_INTERFACE
+class CommentCreate(BaseModel):
+    """Request body to create a new comment for a task within the active organization."""
+    task_id: str = Field(..., description="Task ID this comment belongs to")
+    content: str = Field(..., description="Comment text content")
+
+# PUBLIC_INTERFACE
+class Comment(BaseModel):
+    """Comment response model."""
+    id: str = Field(..., description="Comment ID")
+    org_id: str = Field(..., description="Owning organization ID")
+    task_id: str = Field(..., description="Task ID this comment belongs to")
+    author_id: Optional[str] = Field(default=None, description="User ID who wrote the comment")
+    content: str = Field(..., description="Comment text content")
+    created_at: str = Field(..., description="Creation timestamp (ISO)")

@@ -70,5 +70,17 @@ async def init_db_schema() -> None:
             );
             create index if not exists idx_tasks_org on tasks(org_id);
             create index if not exists idx_tasks_project on tasks(project_id);
+
+            -- Comments table for tasks
+            create table if not exists comments (
+                id uuid primary key default gen_random_uuid(),
+                org_id uuid not null references organizations(id) on delete cascade,
+                task_id uuid not null references tasks(id) on delete cascade,
+                author_id uuid references users(id) on delete set null,
+                content text not null,
+                created_at timestamptz not null default now()
+            );
+            create index if not exists idx_comments_org on comments(org_id);
+            create index if not exists idx_comments_task on comments(task_id);
             """
         )
