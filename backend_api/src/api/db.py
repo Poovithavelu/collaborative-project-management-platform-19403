@@ -87,5 +87,79 @@ async def init_db_schema() -> None:
             );
             create index if not exists idx_comments_org on comments(org_id);
             create index if not exists idx_comments_task on comments(task_id);
+
+            -- Audit log table
+            create table if not exists audit_log (
+                id uuid primary key default gen_random_uuid(),
+                occurred_at timestamptz not null default now(),
+                user_id uuid,
+                org_id uuid,
+                project_id uuid,
+                entity_type text not null,
+                entity_id uuid,
+                action text not null,
+                request_path text,
+                method text,
+                details jsonb
+            );
+            create index if not exists idx_audit_log_org on audit_log(org_id);
+            create index if not exists idx_audit_log_project on audit_log(project_id);
+            create index if not exists idx_audit_log_entity on audit_log(entity_type, entity_id);
+            create index if not exists idx_audit_log_time on audit_log(occurred_at);
+
+            -- Trigger function and triggers to log direct SQL changes on tasks
+            create or replace function public.log_task_changes()
+            returns trigger
+            language plpgsql
+            as $$
+            declare
+                v_action text;
+                v_entity_id uuid;
+                v_org_id uuid;
+                v_project_id uuid;
+                v_details jsonb;
+            begin
+                if (TG_OP = 'INSERT') then
+                    v_action := 'create';
+                    v_entity_id := NEW.id;
+                    v_org_id := NEW.org_id;
+                    v_project_id := NEW.project_id;
+                    v_details := jsonb_build_object('new', to_jsonb(NEW));
+                elsif (TG_OP = 'UPDATE') then
+                    v_action := 'update';
+                    v_entity_id := NEW.id;
+                    v_org_id := NEW.org_id;
+                    v_project_id := NEW.project_id;
+                    v_details := jsonb_build_object('old', to_jsonb(OLD), 'new', to_jsonb(NEW));
+                elsif (TG_OP = 'DELETE') then
+                    v_action := 'delete';
+                    v_entity_id := OLD.id;
+                    v_org_id := OLD.org_id;
+                    v_project_id := OLD.project_id;
+                    v_details := jsonb_build_object('old', to_jsonb(OLD));
+                end if;
+
+                insert into public.audit_log (user_id, org_id, project_id, entity_type, entity_id, action, request_path, method, details)
+                values (null, v_org_id, v_project_id, 'task', v_entity_id, v_action, null, null, v_details);
+
+                return null;
+            end;
+            $$;
+
+            drop trigger if exists trg_tasks_audit_insert on tasks;
+            drop trigger if exists trg_tasks_audit_update on tasks;
+            drop trigger if exists trg_tasks_audit_delete on tasks;
+
+            create trigger trg_tasks_audit_insert
+            after insert on tasks
+            for each row execute function public.log_task_changes();
+
+            create trigger trg_tasks_audit_update
+            after update on tasks
+            for each row execute function public.log_task_changes();
+
+            create trigger trg_tasks_audit_delete
+            after delete on tasks
+            for each row execute function public.log_task_changes();
             """
         )
