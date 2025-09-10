@@ -65,7 +65,7 @@ async def register(data: RegisterRequest = Body(...)) -> TokenResponse:
             await conn.execute("update users set active_org_id=$1 where id=$2", org_id, user_id)
 
     token = create_access_token(user_id=user_id, active_org_id=org_id)
-    return TokenResponse(access_token=token, user_id=user_id, active_org_id=org_id)
+    return TokenResponse(access_token=token, token_type="bearer", user_id=user_id, active_org_id=org_id)
 
 
 # PUBLIC_INTERFACE
@@ -91,7 +91,7 @@ async def login(data: LoginRequest = Body(...)) -> TokenResponse:
         active_org_id = str(row["active_org_id"]) if row["active_org_id"] else None
 
     token = create_access_token(user_id=user_id, active_org_id=active_org_id)
-    return TokenResponse(access_token=token, user_id=user_id, active_org_id=active_org_id)
+    return TokenResponse(access_token=token, token_type="bearer", user_id=user_id, active_org_id=active_org_id)
 
 
 # PUBLIC_INTERFACE
@@ -164,4 +164,4 @@ async def switch_org(
         await conn.execute("update users set active_org_id=$1 where id=$2", data.org_id, user_id)
 
     token = create_access_token(user_id=user_id, active_org_id=data.org_id)
-    return TokenResponse(access_token=token, user_id=user_id, active_org_id=data.org_id)
+    return TokenResponse(access_token=token, token_type="bearer", user_id=user_id, active_org_id=data.org_id)
