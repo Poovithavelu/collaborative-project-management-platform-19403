@@ -201,5 +201,21 @@ async def init_db_schema() -> None:
                 updated_at timestamptz not null default now()
             );
             create index if not exists idx_github_tokens_org on github_tokens(org_id);
+
+            -- Project to GitHub repository associations (one repo per project)
+            create table if not exists project_github_repos (
+                id uuid primary key default gen_random_uuid(),
+                org_id uuid not null references organizations(id) on delete cascade,
+                project_id uuid unique not null references projects(id) on delete cascade,
+                repo_full_name text not null,
+                repo_id bigint,
+                repo_url text,
+                default_branch text,
+                created_at timestamptz not null default now(),
+                updated_at timestamptz not null default now()
+            );
+            create index if not exists idx_proj_gh_org on project_github_repos(org_id);
+            create index if not exists idx_proj_gh_project on project_github_repos(project_id);
+            create index if not exists idx_proj_gh_repo_full_name on project_github_repos(repo_full_name);
             """
         )

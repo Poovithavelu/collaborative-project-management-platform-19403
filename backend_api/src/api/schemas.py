@@ -69,6 +69,27 @@ class Project(BaseModel):
     created_by: Optional[str] = Field(default=None, description="ID of user who created the project")
     created_at: str = Field(..., description="Creation timestamp (ISO)")
 
+# PUBLIC_INTERFACE
+class ProjectGithubLinkCreate(BaseModel):
+    """Request body to link a GitHub repository to a project."""
+    repo_full_name: str = Field(..., description="Full repository name in 'owner/repo' format")
+    repo_id: Optional[int] = Field(default=None, description="GitHub repository numeric ID (optional)")
+    repo_url: Optional[str] = Field(default=None, description="Repository HTML URL (optional)")
+    default_branch: Optional[str] = Field(default=None, description="Default branch name (optional)")
+
+# PUBLIC_INTERFACE
+class ProjectGithubLink(BaseModel):
+    """Response model for a project to GitHub repository link."""
+    id: str = Field(..., description="Link ID")
+    org_id: str = Field(..., description="Organization ID")
+    project_id: str = Field(..., description="Project ID")
+    repo_full_name: str = Field(..., description="Full repository name in 'owner/repo' format")
+    repo_id: Optional[int] = Field(default=None, description="GitHub repository numeric ID")
+    repo_url: Optional[str] = Field(default=None, description="Repository HTML URL")
+    default_branch: Optional[str] = Field(default=None, description="Default branch name")
+    created_at: str = Field(..., description="Creation timestamp (ISO)")
+    updated_at: str = Field(..., description="Last update timestamp (ISO)")
+
 
 # ---------- Tasks Schemas ----------
 
@@ -102,7 +123,6 @@ class Task(BaseModel):
     created_by: Optional[str] = Field(default=None, description="ID of user who created the task")
     created_at: str = Field(..., description="Creation timestamp (ISO)")
 
-
 # PUBLIC_INTERFACE
 class TaskOrderPatch(BaseModel):
     """Single task ordering patch."""
@@ -134,7 +154,6 @@ class Comment(BaseModel):
     content: str = Field(..., description="Comment text content")
     created_at: str = Field(..., description="Creation timestamp (ISO)")
 
-
 # ---------- Uploads/Attachments Schemas ----------
 
 # PUBLIC_INTERFACE
@@ -156,7 +175,6 @@ class UploadTarget(BaseModel):
     """Target association for an upload (one of project_id or task_id required)."""
     project_id: Optional[str] = Field(default=None, description="Project ID to associate the file with")
     task_id: Optional[str] = Field(default=None, description="Task ID to associate the file with")
-
 
 # ---------- Billing/Stripe Schemas ----------
 
