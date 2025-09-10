@@ -11,6 +11,7 @@ from .routers_uploads import router as uploads_router
 from .routers_billing import router as billing_router
 from .routers_github import router as github_router
 from .routers_project_github import router as project_github_router
+from .routers_ai import router as ai_router
 
 openapi_tags = [
     {"name": "Authentication", "description": "Endpoints for user authentication and organization management."},
@@ -173,3 +174,4 @@ app.include_router(uploads_router)
 app.include_router(billing_router)
 app.include_router(github_router)
 app.include_router(project_github_router)
+app.include_router(ai_router)
