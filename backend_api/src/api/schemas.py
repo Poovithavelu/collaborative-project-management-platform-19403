@@ -103,6 +103,19 @@ class Task(BaseModel):
     created_at: str = Field(..., description="Creation timestamp (ISO)")
 
 
+# PUBLIC_INTERFACE
+class TaskOrderPatch(BaseModel):
+    """Single task ordering patch."""
+    task_id: str = Field(..., description="Task ID to update")
+    order_index: int = Field(..., description="New order index for the task")
+
+# PUBLIC_INTERFACE
+class TasksReorderRequest(BaseModel):
+    """Bulk request body to reorder tasks in a project (and optional status lane)."""
+    project_id: str = Field(..., description="Project whose tasks are being reordered")
+    status: Optional[str] = Field(default=None, description="Optional status lane; if provided, update only tasks in this status")
+    patches: List[TaskOrderPatch] = Field(..., description="Array of task_id and order_index pairs to set")
+
 # ---------- Comments Schemas ----------
 
 # PUBLIC_INTERFACE

@@ -3,7 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Header, Body, Query
 
 from .db import get_pool
-from .schemas import Task, TaskCreate, TaskUpdate
+from .schemas import Task, TaskCreate, TaskUpdate, TasksReorderRequest
 from .security import decode_token
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
@@ -134,6 +134,98 @@ async def create_task(
         created_by=str(row["created_by"]) if row["created_by"] else None,
         created_at=row["created_at"].isoformat(),
     )
+
+
+# PUBLIC_INTERFACE
+@router.post(
+    "/reorder",
+    summary="Reorder tasks",
+    description="Bulk update order_index for tasks within a project (and optional status lane). Provide patches as an array of {task_id, order_index}. Authorization enforced via active organization.",
+)
+async def reorder_tasks(
+    data: TasksReorderRequest = Body(...),
+    payload: dict = Depends(_get_current_user_payload),
+) -> dict:
+    """Bulk-update order_index for multiple tasks in a project.
+
+    Validates:
+    - Caller has an active organization.
+    - The specified project belongs to the active organization.
+    - All task_ids belong to the same org and project (and status if provided).
+    Performs updates efficiently inside a single transaction.
+    Returns a summary {updated_count}.
+    """
+    active_org_id = payload.get("active_org_id")
+    if not active_org_id:
+        raise HTTPException(status_code=400, detail="Active organization is not set")
+    if not data.patches:
+        return {"updated_count": 0}
+
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            # Verify project in org
+            await _assert_project_in_org(conn, data.project_id, active_org_id)
+
+            # Collect task ids and map to requested order_index
+            task_ids = [p.task_id for p in data.patches]
+            id_to_index = {p.task_id: p.order_index for p in data.patches}
+
+            # Validate tasks belong to same org/project[/status]
+            params = [active_org_id, data.project_id]
+            where_extra = ""
+            if data.status is not None:
+                where_extra = " and status = $3"
+                params.append(data.status)
+
+            rows = await conn.fetch(
+                f"""
+                select id
+                from tasks
+                where org_id = $1 and project_id = $2{where_extra} and id = any(${{len(params)+1}})
+                """,
+                *params,
+                task_ids,
+            )
+            valid_ids = set(str(r["id"]) for r in rows)
+            missing = [tid for tid in task_ids if tid not in valid_ids]
+            if missing:
+                raise HTTPException(status_code=404, detail=f"One or more tasks not found or outside scope: {missing}")
+
+            # Perform efficient updates with a VALUES table
+            # Build values tuples (task_id, order_index)
+            values = [(tid, id_to_index[tid]) for tid in valid_ids]
+
+            # Use UNNEST arrays for parameterized bulk update
+            task_id_array = [v[0] for v in values]
+            order_array = [v[1] for v in values]
+
+            # Guard by org/project[/status] in the update WHERE
+            update_params = [task_id_array, order_array, active_org_id, data.project_id]
+            status_clause = ""
+            if data.status is not None:
+                status_clause = " and t.status = $6"
+                update_params.append(data.status)
+
+            result = await conn.execute(
+                f"""
+                with updates as (
+                    select unnest($1::uuid[]) as id, unnest($2::int[]) as order_index
+                )
+                update tasks t
+                set order_index = u.order_index
+                from updates u
+                where t.id = u.id and t.org_id = $3 and t.project_id = $4{status_clause}
+                """,
+                *update_params,
+            )
+            # asyncpg returns "UPDATE <count>"
+            try:
+                updated_count = int(result.split(" ")[1])
+            except Exception:
+                updated_count = 0
+
+    return {"updated_count": updated_count}
 
 
 # PUBLIC_INTERFACE
